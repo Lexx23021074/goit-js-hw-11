@@ -18,10 +18,16 @@
 
 body {
   display: flex;
-  flex-direction: column;
-  min-width: 100vw;
-  min-height: 100vh;
-  margin: 0;
+    flex-direction: column;
+    min-width: 100vw;
+    min-height: 100vh;
+  
+    margin: 0;
+    padding: 24px;
+  
+    font-family: 'Inter', sans-serif;
+    background-color: #ffffff;
+    color: #2e2f42;
 }
 
 main {

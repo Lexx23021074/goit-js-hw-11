@@ -1,78 +1,44 @@
-import { fetchImages } from './js/pixabay-api.js';
-import { renderGallery } from './js/render-functions.js';
-
-import SimpleLightbox from 'simplelightbox';
-import 'simplelightbox/dist/simple-lightbox.min.css';
-
+import { getImagesByQuery } from './js/pixabay-api.js';
+import {
+  createGallery,
+  clearGallery,
+  showLoader,
+  hideLoader,
+} from './js/render-functions.js';
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
 
-const form = document.querySelector('.search-form');
-const gallery = document.querySelector('.gallery');
-const loaderContainer = document.querySelector('.loader-container');
+const form = document.querySelector('.form');
 
-let lightbox = null;
-
-function initOrRefreshLightbox() {
-  if (lightbox) {
-    lightbox.destroy();
-    lightbox = null;
-  }
-  lightbox = new SimpleLightbox('.gallery a', {
-    captionsData: 'alt',
-    captionDelay: 250,
-  });
-}
-
-function showLoader() {
-  loaderContainer.classList.remove('hidden');
-}
-
-function hideLoader() {
-  loaderContainer.classList.add('hidden');
-}
-
-form.addEventListener('submit', handleSubmit);
-
-async function handleSubmit(event) {
+form.addEventListener('submit', async event => {
   event.preventDefault();
-  const query = event.target.elements.searchQuery.value.trim();
+
+ const query = event.target.elements.searchQuery.value.trim();
 
   if (!query) {
-    iziToast.error({
-      title: 'Error',
-      message: 'Please enter a search query!',
-      position: 'topLeft',
-    });
+    iziToast.error({ title: 'Error', message: 'Please fill in the field!' });
     return;
   }
 
+  clearGallery(); // Очищуємо галерею
+  showLoader(); // Показуємо лоадер
+
   try {
-    showLoader(); // 🔹 показуємо лоадер перед запитом
+    const data = await getImagesByQuery(query);
 
-    const data = await fetchImages(query);
-
-    if (!data.hits.length) {
-      gallery.innerHTML = '';
-      initOrRefreshLightbox();
-      iziToast.info({
-        title: 'Немає результатів',
-        message: 'За вашим запитом нічого не знайдено.',
-        position: 'topRight',
+    if (data.hits.length === 0) {
+      iziToast.warning({
+        message:
+          'Sorry, there are no images matching your search query. Please try again!',
       });
-      return;
+    } else {
+      createGallery(data.hits); // Рендеримо
     }
-
-    gallery.innerHTML = renderGallery(data.hits);
-    initOrRefreshLightbox();
   } catch (error) {
-    console.error(error);
     iziToast.error({
-      title: 'Помилка',
-      message: 'Щось пішло не так. Спробуйте пізніше.',
-      position: 'topRight',
+      message: 'Something went wrong, please try again later.',
     });
   } finally {
-    hideLoader(); // 🔹 ховаємо лоадер у будь-якому випадку
+    hideLoader(); // Ховаємо лоадер
   }
-}
+});
